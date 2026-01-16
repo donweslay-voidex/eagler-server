@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const net = require('net');
 const http = require('http');
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000; // Use Render's port (10000)
 
 const server = http.createServer((req, res) => {
     res.writeHead(200);
@@ -19,10 +19,8 @@ wss.on('connection', (ws) => {
     mc.on('data', (data) => ws.send(data));
     ws.on('close', () => mc.end());
     mc.on('close', () => ws.close());
-    ws.on('error', () => mc.end());
-    mc.on('error', () => ws.close());
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Bridge running on port ${PORT}`);
+    console.log(`Bridge running on Render-assigned port: ${PORT}`);
 });
