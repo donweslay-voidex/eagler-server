@@ -1,31 +1,28 @@
 const WebSocket = require('ws');
 const net = require('net');
+const http = require('http');
 
-const wss = new WebSocket.Server({ port: 8080 });
+const PORT = process.env.PORT || 8080;
 
-wss.on('connection', (ws) => {
-    console.log('Eaglercraft client connected');
-    
-    // Connect to YOUR EXISTING Purpur server
-    const mcSocket = net.createConnection({
-        host: '147.135.104.179', // YOUR SERVER IP
-        port: 25565
-    });
-    
-    // WebSocket ↔ TCP Bridge
-    ws.on('message', (data) => {
-        mcSocket.write(data);
-    });
-    
-    mcSocket.on('data', (data) => {
-        ws.send(data);
-    });
-    
-    ws.on('close', () => mcSocket.end());
-    mcSocket.on('close', () => ws.close());
-    
-    mcSocket.on('error', () => ws.close());
-    ws.on('error', () => mcSocket.end());
+const server = http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end('Bridge OK');
 });
 
-console.log('Eaglercraft bridge running on port 8080');
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+    console.log('Client connected');
+    const mc = net.connect(25565, '147.135.104.179');
+    
+    ws.on('message', (data) => mc.write(data));
+    mc.on('data', (data) => ws.send(data));
+    ws.on('close', () => mc.end());
+    mc.on('close', () => ws.close());
+    ws.on('error', () => mc.end());
+    mc.on('error', () => ws.close());
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Bridge running on port ${PORT}`);
+});
